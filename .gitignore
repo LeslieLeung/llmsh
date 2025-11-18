@@ -1,0 +1,13 @@
+# Editors
+.cursor
+.claude
+.vscode
+
+# Binaries
+llmsh
+
+# References, local dev docs
+references
+
+# macOS bullshits
+.DS_Store
