@@ -1,5 +1,7 @@
 # llmsh Usage Documentation
 
+English | [简体中文](USAGE.zh-CN.md)
+
 llmsh is a ZSH plugin that provides intelligent command prediction, completion, and natural language to command conversion using LLMs.
 
 ## Table of Contents

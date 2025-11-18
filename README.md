@@ -1,9 +1,11 @@
 # llmsh
 
+English | [简体中文](README.zh-CN.md)
+
 An intelligent ZSH plugin that provides AI-powered command prediction and natural language to command conversion using LLMs.
 
-> 📖 For detailed usage and troubleshooting, see [USAGE.md](USAGE.md)  
-> 👨‍💻 For development and contributing, see [DEVELOPMENT.md](DEVELOPMENT.md)
+> 📖 For detailed usage and troubleshooting, see [USAGE.md](USAGE.md) ([中文](USAGE.zh-CN.md))
+> 👨‍💻 For development and contributing, see [DEVELOPMENT.md](DEVELOPMENT.md) ([中文](DEVELOPMENT.zh-CN.md))
 
 ## Features
 

@@ -1,5 +1,7 @@
 # Development Guide
 
+English | [简体中文](DEVELOPMENT.zh-CN.md)
+
 ## Architecture
 
 ### Components
