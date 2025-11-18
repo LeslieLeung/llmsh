@@ -5,6 +5,97 @@ BINARY=llmsh
 INSTALL_PATH="$HOME/.local/bin"
 CONFIG_DIR="$HOME/.llmsh"
 ZSHRC="$HOME/.zshrc"
+REPO="LeslieLeung/llmsh"
+
+# Detect OS and architecture
+detect_platform() {
+    local os=""
+    local arch=""
+
+    # Detect OS
+    case "$(uname -s)" in
+        Linux*)     os="linux" ;;
+        Darwin*)    os="darwin" ;;
+        MINGW*|MSYS*|CYGWIN*) os="windows" ;;
+        *)
+            echo "❌ Error: Unsupported operating system: $(uname -s)"
+            exit 1
+            ;;
+    esac
+
+    # Detect architecture
+    case "$(uname -m)" in
+        x86_64|amd64)   arch="amd64" ;;
+        arm64|aarch64)  arch="arm64" ;;
+        *)
+            echo "❌ Error: Unsupported architecture: $(uname -m)"
+            exit 1
+            ;;
+    esac
+
+    echo "${os}-${arch}"
+}
+
+# Install jq based on OS
+install_jq() {
+    if command -v jq &>/dev/null; then
+        echo "✓ jq is already installed"
+        return 0
+    fi
+
+    echo "Installing jq..."
+
+    case "$(uname -s)" in
+        Darwin*)
+            if command -v brew &>/dev/null; then
+                brew install jq
+            else
+                echo "❌ Error: Homebrew is required to install jq on macOS"
+                echo "Please install Homebrew from https://brew.sh/"
+                echo "Or install jq manually from https://stedolan.github.io/jq/"
+                exit 1
+            fi
+            ;;
+        Linux*)
+            if [ -f /etc/debian_version ]; then
+                # Debian/Ubuntu
+                if command -v sudo &>/dev/null; then
+                    sudo apt-get update && sudo apt-get install -y jq
+                else
+                    echo "⚠️  Warning: sudo not available, trying without sudo..."
+                    apt-get update && apt-get install -y jq
+                fi
+            elif [ -f /etc/redhat-release ]; then
+                # RHEL/CentOS/Fedora
+                if command -v sudo &>/dev/null; then
+                    sudo yum install -y jq
+                else
+                    echo "⚠️  Warning: sudo not available, trying without sudo..."
+                    yum install -y jq
+                fi
+            elif [ -f /etc/arch-release ]; then
+                # Arch Linux
+                if command -v sudo &>/dev/null; then
+                    sudo pacman -S --noconfirm jq
+                else
+                    echo "⚠️  Warning: sudo not available, trying without sudo..."
+                    pacman -S --noconfirm jq
+                fi
+            else
+                echo "❌ Error: Unsupported Linux distribution"
+                echo "Please install jq manually: https://stedolan.github.io/jq/"
+                exit 1
+            fi
+            ;;
+        *)
+            echo "❌ Error: Cannot install jq automatically on this system"
+            echo "Please install jq manually from https://stedolan.github.io/jq/"
+            exit 1
+            ;;
+    esac
+
+    echo "✓ jq installed successfully"
+}
 
 # Uninstall function
 uninstall() {
@@ -88,15 +179,6 @@ echo "  Installing llmsh"
 echo "========================================="
 echo ""
 
-# Check for Go
-if ! command -v go &>/dev/null; then
-    echo "❌ Error: Go is not installed"
-    echo "Please install Go from https://golang.org/dl/"
-    exit 1
-fi
-
-echo "✓ Go found: $(go version)"
-
 # Check for zsh
 if ! command -v zsh &>/dev/null; then
     echo "⚠️  Warning: zsh is not installed"
@@ -116,34 +198,82 @@ else
     echo "✓ zsh found: $(zsh --version)"
 fi
 
-# Check for jq
-if ! command -v jq &>/dev/null; then
-    echo "⚠️  Warning: jq is not installed"
-    echo "jq is required for the ZSH plugin to work."
-    echo ""
-    echo "Install jq:"
-    echo "  macOS: brew install jq"
-    echo "  Linux (Debian/Ubuntu): sudo apt-get install jq"
-    echo "  Linux (RHEL/CentOS): sudo yum install jq"
-    echo ""
-    read -p "Continue anyway? (y/n) " -n 1 -r
-    echo ""
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
-    fi
-else
-    echo "✓ jq found"
+# Install jq if needed
+install_jq
+
+# Detect platform
+PLATFORM=$(detect_platform)
+echo "✓ Detected platform: $PLATFORM"
+
+# Get latest release version
+echo ""
+echo "Fetching latest release..."
+LATEST_VERSION=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+
+if [ -z "$LATEST_VERSION" ]; then
+    echo "❌ Error: Could not fetch latest release version"
+    echo "Please check your internet connection or try again later"
+    exit 1
 fi
 
-# Build and install
-echo ""
-echo "Building llmsh..."
-make deps
-make build
+echo "✓ Latest version: $LATEST_VERSION"
 
+# Download binary
 echo ""
-echo "Installing llmsh..."
-make install
+echo "Downloading llmsh..."
+BINARY_NAME="llmsh-${PLATFORM}"
+if [[ "$PLATFORM" == windows* ]]; then
+    BINARY_NAME="${BINARY_NAME}.exe"
+fi
+
+DOWNLOAD_URL="https://github.com/$REPO/releases/download/$LATEST_VERSION/$BINARY_NAME"
+
+# Create install directory
+mkdir -p "$INSTALL_PATH"
+
+# Download the binary
+if ! curl -L -o "$INSTALL_PATH/$BINARY" "$DOWNLOAD_URL"; then
+    echo "❌ Error: Failed to download binary from $DOWNLOAD_URL"
+    exit 1
+fi
+
+# Make it executable
+chmod +x "$INSTALL_PATH/$BINARY"
+echo "✓ Downloaded and installed binary to $INSTALL_PATH/$BINARY"
+
+# Create config directory
+echo ""
+mkdir -p "$CONFIG_DIR"
+echo "✓ Created config directory at $CONFIG_DIR"
+
+# Install ZSH plugin
+if [ -f "zsh/llmsh.plugin.zsh" ]; then
+    install -m 644 zsh/llmsh.plugin.zsh "$CONFIG_DIR/"
+    echo "✓ Installed ZSH plugin to $CONFIG_DIR/llmsh.plugin.zsh"
+else
+    echo "⚠️  Warning: ZSH plugin not found in repository"
+    echo "Downloading from GitHub..."
+    curl -L -o "$CONFIG_DIR/llmsh.plugin.zsh" "https://github.com/$REPO/raw/$LATEST_VERSION/zsh/llmsh.plugin.zsh"
+    echo "✓ Downloaded ZSH plugin to $CONFIG_DIR/llmsh.plugin.zsh"
+fi
+
+# Add to .zshrc if not already present
+echo ""
+if [ -f "$ZSHRC" ]; then
+    if ! grep -q "source $CONFIG_DIR/llmsh.plugin.zsh" "$ZSHRC"; then
+        echo "Adding llmsh plugin to $ZSHRC..."
+        echo "" >> "$ZSHRC"
+        echo "# llmsh - AI-powered shell assistant" >> "$ZSHRC"
+        echo "source $CONFIG_DIR/llmsh.plugin.zsh" >> "$ZSHRC"
+        echo "✓ Added llmsh plugin to $ZSHRC"
+    else
+        echo "✓ llmsh plugin already in $ZSHRC"
+    fi
+else
+    echo "⚠️  Warning: $ZSHRC not found"
+    echo "Please add this line to your .zshrc manually:"
+    echo "  source $CONFIG_DIR/llmsh.plugin.zsh"
+fi
 
 echo ""
 echo "========================================="
@@ -164,4 +294,15 @@ if [ -f "$ZSHRC" ]; then
     fi
 fi
 
+echo "Next steps:"
+echo "1. Initialize config:"
+echo "   $BINARY config init"
+echo ""
+echo "2. Set your API key (choose one):"
+echo "   export OPENAI_API_KEY=\"your-api-key\""
+echo "   or edit $CONFIG_DIR/config.yaml"
+echo ""
+echo "3. Reload your shell:"
+echo "   source ~/.zshrc"
+echo ""
 echo "For more information, see README.md and USAGE.md"

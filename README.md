@@ -32,23 +32,39 @@ An intelligent ZSH plugin that provides AI-powered command prediction and natura
 
 ### Prerequisites
 
-- **Go**: 1.21 or later
 - **zsh**: Your shell must be zsh
-- **jq**: For JSON processing (`brew install jq` on macOS)
+- **jq**: For JSON processing (will be installed automatically if not present)
+- **curl**: For downloading the binary (usually pre-installed)
 - **Optional**: [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) for enhanced display
 
 ### Quick Install
 
 ```bash
+# Download and run the install script
+curl -fsSL https://raw.githubusercontent.com/LeslieLeung/llmsh/main/install.sh | bash
+```
+
+Or if you prefer to review the script first:
+
+```bash
 # Clone the repository
-git clone https://github.com/leslieleung/llmsh.git
+git clone https://github.com/LeslieLeung/llmsh.git
 cd llmsh
 
 # Run the install script
 ./install.sh
 ```
 
+The install script will:
+- Detect your OS and architecture automatically
+- Download the latest binary from GitHub releases
+- Install jq if not already present
+- Set up the ZSH plugin
+- Add the plugin to your ~/.zshrc
+
 ### Manual Install
+
+If you prefer to build from source:
 
 ```bash
 # Install dependencies and build
@@ -58,6 +74,8 @@ make build
 # Install binary and plugin
 make install
 ```
+
+**Note**: Building from source requires Go 1.21 or later.
 
 ### Setup
 
