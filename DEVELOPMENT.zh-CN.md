@@ -98,6 +98,3 @@ go test -v ./pkg/llm
 4. 推送到分支（`git push origin feature/amazing-feature`）
 5. 开启一个 Pull Request
 
-## 许可证
-
-MIT License - 详见 LICENSE 文件

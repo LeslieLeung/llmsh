@@ -104,6 +104,10 @@ make install
    source ~/.zshrc
    ```
 
+> [!TIP]
+> 出于隐私、成本和性能考虑，你可以使用非常小的模型（如 `qwen/qwen3-4b-2507`）本地使用 [LM Studio](https://lmstudio.ai/)。
+> 它在 M1 Pro 16GB RAM 上效果良好（<1s 延迟和几乎完美的准确性）。
+
 ## 快速开始
 
 ### 自然语言转换
@@ -149,4 +153,6 @@ rm -rf ~/.llmsh  # 删除所有数据
 
 ## 致谢
 
-灵感来源于 [zsh-copilot](https://github.com/Myzel394/zsh-copilot)，使用现代 Go 实践构建。
+- [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions)
+- [zsh-copilot](https://github.com/Myzel394/zsh-copilot)
+- [smart-suggestion](https://github.com/yetone/smart-suggestion)
